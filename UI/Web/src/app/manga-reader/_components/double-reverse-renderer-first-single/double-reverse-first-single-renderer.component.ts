@@ -7,6 +7,7 @@ import {
   inject,
   Inject,
   Input,
+  OnDestroy,
   OnInit,
   Output
 } from '@angular/core';
@@ -18,7 +19,7 @@ import { LayoutMode } from '../../_models/layout-mode';
 import { FITTING_OPTION, PAGING_DIRECTION } from '../../_models/reader-enums';
 import { ReaderSetting } from '../../_models/reader-setting';
 import { DEBUG_MODES, ImageRenderer } from '../../_models/renderer';
-import { MangaReaderService } from '../../_service/manga-reader.service';
+import { ManagaReaderService } from '../../_service/managa-reader.service';
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 import { SafeStylePipe } from '../../../_pipes/safe-style.pipe';
 
@@ -27,14 +28,14 @@ import { SafeStylePipe } from '../../../_pipes/safe-style.pipe';
  * page 11 page 10.
  */
 @Component({
-    selector: 'app-double-reverse-renderer',
-    templateUrl: './double-reverse-renderer.component.html',
-    styleUrls: ['./double-reverse-renderer.component.scss'],
+    selector: 'app-double-reverse-first-single-renderer',
+    templateUrl: './double-reverse-first-single-renderer.component.html',
+    styleUrls: ['./double-reverse-first-single-renderer.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: true,
     imports: [NgIf, NgClass, AsyncPipe, SafeStylePipe]
 })
-export class DoubleReverseRendererComponent implements OnInit, ImageRenderer {
+export class DoubleReverseFirstSingleRendererComponent implements OnInit, ImageRenderer {
 
 
   @Input({required: true}) readerSettings$!: Observable<ReaderSetting>;
@@ -84,7 +85,7 @@ export class DoubleReverseRendererComponent implements OnInit, ImageRenderer {
 
 
 
-  constructor(private readonly cdRef: ChangeDetectorRef, public mangaReaderService: MangaReaderService,
+  constructor(private readonly cdRef: ChangeDetectorRef, public mangaReaderService: ManagaReaderService,
     @Inject(DOCUMENT) private document: Document, public readerService: ReaderService) { }
 
   ngOnInit(): void {
@@ -191,6 +192,11 @@ export class DoubleReverseRendererComponent implements OnInit, ImageRenderer {
       return false;
     }
 
+    if (this.mangaReaderService.isFirstNonWidePage(this.pageNum)) {
+      this.debugLog('Not rendering double as current page is first none wide image after cover');
+      return false;
+    }
+
     // if (this.mangaReaderService.isSecondLastImage(this.pageNum, this.maxPages)) {
     //   this.debugLog('Not rendering double as current page is last');
     //   return false;
@@ -210,7 +216,7 @@ export class DoubleReverseRendererComponent implements OnInit, ImageRenderer {
   }
 
   isValid() {
-    return this.layoutMode === LayoutMode.DoubleReversed;
+    return this.layoutMode === LayoutMode.DoubleReversedFirstSingle;
   }
 
   renderPage(img: Array<HTMLImageElement | null>): void {
@@ -228,7 +234,7 @@ export class DoubleReverseRendererComponent implements OnInit, ImageRenderer {
     return true;
   }
   getPageAmount(direction: PAGING_DIRECTION): number {
-    if (this.layoutMode !== LayoutMode.DoubleReversed) return 0;
+    if (this.layoutMode !== LayoutMode.DoubleReversedFirstSingle) return 0;
 
     switch (direction) {
       case PAGING_DIRECTION.FORWARD:
@@ -243,6 +249,11 @@ export class DoubleReverseRendererComponent implements OnInit, ImageRenderer {
         }
 
         if (this.mangaReaderService.isWidePage(this.pageNum + 1)) {
+          this.debugLog('Moving forward 1 page as current page is wide');
+          return 1;
+        }
+
+        if (this.mangaReaderService.isFirstNonWidePage(this.pageNum)) {
           this.debugLog('Moving forward 1 page as current page is wide');
           return 1;
         }
@@ -270,15 +281,15 @@ export class DoubleReverseRendererComponent implements OnInit, ImageRenderer {
           return 2;
         }
 
-        if (this.mangaReaderService.isWidePage(this.pageNum)) {
-          this.debugLog('Moving back 1 page as left page is wide');
-          return 1;
-        }
+        // if (this.mangaReaderService.isWidePage(this.pageNum)) {
+        //   this.debugLog('Moving back 1 page as left page is wide');
+        //   return 1;
+        // }
 
-        if (this.mangaReaderService.isWidePage(this.pageNum) && (!this.mangaReaderService.isWidePage(this.pageNum - 4))) {
-          this.debugLog('Moving back 1 page as left page is wide');
-          return 1;
-        }
+        // if (this.mangaReaderService.isWidePage(this.pageNum) && (!this.mangaReaderService.isWidePage(this.pageNum - 4))) {
+        //   this.debugLog('Moving back 1 page as left page is wide');
+        //   return 1;
+        // }
 
         if (this.mangaReaderService.isWidePage(this.pageNum - 1)) {
           this.debugLog('Moving back 1 page as prev page is wide');
@@ -292,8 +303,14 @@ export class DoubleReverseRendererComponent implements OnInit, ImageRenderer {
 
         if (this.mangaReaderService.isWidePage(this.pageNum + 2)) {
           this.debugLog('Moving back 2 page as 2 pages back is wide');
+          return 2;
+        }
+
+        if (this.mangaReaderService.isFirstNonWidePage(this.pageNum - 1)) {
+          this.debugLog('Moving back 1 page as 1 page back is first none wide page');
           return 1;
         }
+
         // Not sure about this condition on moving backwards
         if (this.mangaReaderService.isSecondLastImage(this.pageNum, this.maxPages)) {
           this.debugLog('Moving back 2 page as 2 pages left');

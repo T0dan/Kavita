@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Globalization;
@@ -41,6 +41,8 @@ public interface IReaderService
     Task MarkVolumesUntilAsRead(AppUser user, int seriesId, int volumeNumber);
     HourEstimateRangeDto GetTimeEstimate(long wordCount, int pageCount, bool isEpub);
     IDictionary<int, int> GetPairs(IEnumerable<FileDimensionDto> dimensions);
+    IDictionary<int, int> GetPairsNoCover(IEnumerable<FileDimensionDto> dimensions);
+    IDictionary<int, int> GetPairsFirstSingle(IEnumerable<FileDimensionDto> dimensions);
     Task<string> GetThumbnail(Chapter chapter, int pageNum, IEnumerable<string> cachedImages);
 }
 
@@ -742,6 +744,101 @@ public class ReaderService : IReaderService
                 {
                     pairs.Add(dimension.PageNumber, dimension.PageNumber);
                     pairStart = true;
+                }
+                else
+                {
+                    pairs.Add(dimension.PageNumber, pairStart ? dimension.PageNumber - 1 : dimension.PageNumber);
+                    pairStart = !pairStart;
+                }
+            }
+
+            previousPage = dimension;
+        }
+
+        return pairs;
+    }
+
+    /// <summary>
+    /// This is used exclusively for double page renderer. The goal is to break up all files into pairs respecting the reader.
+    /// wide images should count as 2 pages.
+    /// </summary>
+    /// <param name="dimensions"></param>
+    /// <returns></returns>
+    public IDictionary<int, int> GetPairsNoCover(IEnumerable<FileDimensionDto> dimensions)
+    {
+        var pairs = new Dictionary<int, int>();
+        var files = dimensions.ToList();
+        if (files.Count == 0) return pairs;
+
+        var pairStart = true;
+        var previousPage = files[0];
+        pairs.Add(previousPage.PageNumber, previousPage.PageNumber);
+
+        foreach (var dimension in files.Skip(1))
+        {
+            if (dimension.IsWide)
+            {
+                pairs.Add(dimension.PageNumber, dimension.PageNumber);
+                pairStart = true;
+            }
+            else
+            {
+                if (previousPage.IsWide)
+                {
+                    pairs.Add(dimension.PageNumber, dimension.PageNumber);
+                    pairStart = true;
+                }
+                else
+                {
+                    pairs.Add(dimension.PageNumber, pairStart ? dimension.PageNumber - 1 : dimension.PageNumber);
+                    pairStart = !pairStart;
+                }
+            }
+
+            previousPage = dimension;
+        }
+
+        return pairs;
+    }
+
+    /// <summary>
+    /// This is used exclusively for double page renderer. The goal is to break up all files into pairs respecting the reader.
+    /// wide images should count as 2 pages.
+    /// </summary>
+    /// <param name="dimensions"></param>
+    /// <returns></returns>
+    public IDictionary<int, int> GetPairsFirstSingle(IEnumerable<FileDimensionDto> dimensions)
+    {
+        var pairs = new Dictionary<int, int>();
+        var files = dimensions.ToList();
+        if (files.Count == 0) return pairs;
+
+        var pairStart = true;
+        var firstSingle = true;
+        var previousPage = files[0];
+        pairs.Add(previousPage.PageNumber, previousPage.PageNumber);
+
+        foreach (var dimension in files.Skip(1))
+        {
+            if (dimension.IsWide)
+            {
+                pairs.Add(dimension.PageNumber, dimension.PageNumber);
+                pairStart = true;
+            }
+            else
+            {
+                if (previousPage.IsWide || previousPage.PageNumber == 0 || firstSingle)
+                {
+                    pairs.Add(dimension.PageNumber, dimension.PageNumber);
+                    if (firstSingle)
+                    {
+                        pairStart = false;
+                        firstSingle = false;
+                    }
+                    else
+                    {
+                        pairStart = true;
+                    }
                 }
                 else
                 {

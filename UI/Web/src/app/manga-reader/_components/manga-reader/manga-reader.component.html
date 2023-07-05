@@ -120,6 +120,22 @@
                                         [pageNum$]="pageNum$"
                                         [getPage]="getPageFn">
           </app-double-no-cover-renderer>
+
+          <app-double-reverse-no-cover-renderer [image$]="currentImage$" 
+                                                [readerSettings$]="readerSettings$" 
+                                                [bookmark$]="showBookmarkEffect$"
+                                                [showClickOverlay$]="showClickOverlay$"
+                                                [pageNum$]="pageNum$"
+                                                [getPage]="getPageFn">
+          </app-double-reverse-no-cover-renderer>
+
+          <app-double-reverse-first-single-renderer [image$]="currentImage$" 
+                                                    [readerSettings$]="readerSettings$" 
+                                                    [bookmark$]="showBookmarkEffect$"
+                                                    [showClickOverlay$]="showClickOverlay$"
+                                                    [pageNum$]="pageNum$"
+                                                    [getPage]="getPageFn">
+          </app-double-reverse-first-single-renderer>
         </div>
       } @else {
         @if (!isLoading && !inSetup) {
@@ -250,6 +266,42 @@
                           <i class="fab fa-1 fa-stack-1x"></i>
                         </span>
                       </div>
+                    }
+                    @case (LayoutMode.DoubleNoCover) {
+                      <div class="split-double">
+                        <span class="fa-stack fa-1x">
+                            <i class="fa-regular fa-square-full fa-stack-2x"></i>
+                            <i class="fab fa-1 fa-stack-1x"></i>
+                        </span>
+                        <span class="fa-stack fa right">
+                          <i class="fa-regular fa-square-full fa-stack-2x"></i>
+                          <i class="fab fa-2 fa-stack-1x"></i>
+                        </span>
+                      </div>
+                    }
+                    @case (LayoutMode.DoubleReversedNoCover) {
+                      <div class="split-double">
+                        <span class="fa-stack fa-1x">
+                          <i class="fa-regular fa-square-full fa-stack-2x"></i>
+                          <i class="fab fa-2 fa-stack-1x"></i>
+                        </span>
+                        <span class="fa-stack fa right">
+                          <i class="fa-regular fa-square-full fa-stack-2x"></i>
+                          <i class="fab fa-1 fa-stack-1x"></i>
+                        </span>
+                      </div>                                   
+                    }
+                    @case (LayoutMode.DoubleReversedFirstSingle) {
+                      <div class="split-double">
+                        <span class="fa-stack fa-1x">
+                          <i class="fa-regular fa-square-full fa-stack-2x"></i>
+                          <i class="fab fa-2 fa-stack-1x"></i>
+                        </span>
+                        <span class="fa-stack fa right">
+                          <i class="fa-regular fa-square-full fa-stack-2x"></i>
+                          <i class="fab fa-1 fa-stack-1x"></i>
+                        </span>
+                      </div>                                   
                     }
                   }
 

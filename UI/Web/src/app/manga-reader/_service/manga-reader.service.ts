@@ -14,26 +14,45 @@ export class MangaReaderService {
 
   private pageDimensions: DimensionMap = {};
   private pairs: {[key: number]: number} = {};
+  private pairsNoCover: {[key: number]: number} = {};
+  private pairsFirstPage: {[key: number]: number} = {};
   private renderer: Renderer2;
+  private firstNonWidePage: number = 0;
 
   constructor(rendererFactory: RendererFactory2, private readerService: ReaderService) {
     this.renderer = rendererFactory.createRenderer(null, null);
   }
 
   load(chapterInfo: ChapterInfo | BookmarkInfo) {
+    this.firstNonWidePage = 0;
     chapterInfo.pageDimensions!.forEach(d => {
       this.pageDimensions[d.pageNumber] = {
         height: d.height,
         width: d.width,
         isWide: d.isWide
       };
+      if (d.pageNumber !== 0 && !d.isWide && this.firstNonWidePage === 0) {
+        this.firstNonWidePage = d.pageNumber;
+      }
     });
     this.pairs = chapterInfo.doublePairs!;
+    this.pairsNoCover = chapterInfo.doublePairsNoCover!;
+    this.pairsFirstPage = chapterInfo.doublePairsFirstSingle!;
   }
 
   adjustForDoubleReader(page: number) {
     if (!this.pairs.hasOwnProperty(page)) return page;
     return this.pairs[page];
+  }
+
+  adjustForDoubleNoCoverReader(page: number) {
+    if (!this.pairsNoCover.hasOwnProperty(page)) return page;
+    return this.pairsNoCover[page];
+  }
+
+  adjustForDoubleFirstSingleReader(page: number) {
+    if (!this.pairsFirstPage.hasOwnProperty(page)) return page;
+    return this.pairsFirstPage[page];
   }
 
   getPageDimensions(pageNum: number) {
@@ -68,6 +87,16 @@ export class MangaReaderService {
    */
   isCoverImage(pageNumber: number) {
     return pageNumber === 0;
+  }
+
+  /**
+   * If pagenumber is 0 aka first page, which on double page rendering should always render as a single. 
+   * 
+   * @param pageNumber current page number
+   * @returns 
+   */
+  isFirstNonWidePage(pageNumber: number) {
+    return pageNumber === this.firstNonWidePage;
   }
 
   /**

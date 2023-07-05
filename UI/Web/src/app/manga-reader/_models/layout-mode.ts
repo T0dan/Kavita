@@ -18,5 +18,13 @@ export enum LayoutMode {
      * Renders 2 pages side by side on the renderer. Cover images will split.
      */
     DoubleNoCover = 4,
+    /**
+     * Renders 2 pages side by side on the renderer. Cover images will not split. This version reverses the order and is used for Manga only
+     */
+    DoubleReversedNoCover = 5,
+    /**
+     * Renders 2 pages side by side on the renderer. Cover images will not split. This version reverses the order and is used for Manga only
+     */
+    DoubleReversedFirstSingle = 6,
 
 }

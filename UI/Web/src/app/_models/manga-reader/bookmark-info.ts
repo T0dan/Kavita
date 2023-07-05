@@ -17,4 +17,12 @@ export interface BookmarkInfo {
      * This will not always be present. Depends on if asked from backend.
      */
     doublePairs?: {[key: number]: number};
+    /**
+     * This will not always be present. Depends on if asked from backend.
+     */
+    doublePairsNoCover?: {[key: number]: number};
+    /**
+     * This will not always be present. Depends on if asked from backend.
+     */
+    doublePairsFirstSingle?: {[key: number]: number};
 }
