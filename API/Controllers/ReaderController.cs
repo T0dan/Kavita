@@ -259,6 +259,8 @@ public class ReaderController : BaseApiController
         {
             info.PageDimensions = _cacheService.GetCachedFileDimensions(_cacheService.GetCachePath(chapterId));
             info.DoublePairs = _readerService.GetPairs(info.PageDimensions);
+            info.DoublePairsNoCover = _readerService.GetPairsNoCover(info.PageDimensions);
+            info.DoublePairsFirstSingle = _readerService.GetPairsFirstSingle(info.PageDimensions);
         }
 
         if (info.ChapterTitle is {Length: > 0}) {
