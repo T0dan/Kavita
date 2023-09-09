@@ -2724,6 +2724,8 @@
         "single": "Single",
         "double": "Double",
         "double-manga": "Double (Manga)",
+        "double-manga-first-non-wide-single": "Double (Manga) (First none wide single)",
+        "double-manga-no-cover": "Double (Manga) (No cover)",
         "scroll": "Scroll",
         "1-column": "1 Column",
         "2-column": "2 Column",
