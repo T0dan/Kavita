@@ -315,6 +315,8 @@ public class ReaderController : BaseApiController
         {
             info.PageDimensions = _cacheService.GetCachedFileDimensions(_cacheService.GetBookmarkCachePath(seriesId));
             info.DoublePairs = _readerService.GetPairs(info.PageDimensions);
+            info.DoublePairsNoCover = _readerService.GetPairsNoCover(info.PageDimensions);
+            info.DoublePairsFirstSingle = _readerService.GetPairsFirstSingle(info.PageDimensions);
         }
 
         return Ok(info);
