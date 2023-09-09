@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using API.Entities.Enums;
 
 namespace API.DTOs.Reader;
@@ -22,4 +22,14 @@ public class BookmarkInfoDto
     /// </summary>
     /// <remarks>This is optionally returned by includeDimensions</remarks>
     public IDictionary<int, int>? DoublePairs { get; set; }
+    /// <summary>
+    /// For Double Page reader with no cover, this will contain snap points to ensure the reader always resumes on correct page
+    /// </summary>
+    /// <remarks>This is optionally returned by includeDimensions</remarks>
+    public IDictionary<int, int>? DoublePairsNoCover { get; set; }
+    /// <summary>
+    /// For Double Page reader where first non wide page after cover is single, this will contain snap points to ensure the reader always resumes on correct page
+    /// </summary>
+    /// <remarks>This is optionally returned by includeDimensions</remarks>
+    public IDictionary<int, int>? DoublePairsFirstSingle { get; set; }
 }

@@ -781,7 +781,6 @@ export class MangaReaderComponent implements OnInit, AfterViewInit, OnDestroy {
 
   // If we are in double mode, we need to check if our current page is on a right edge or not, if so adjust by decrementing by 1
   adjustPagesForDoubleRenderer(pageNum: number) {
-    if (pageNum === this.maxPages - 1) return pageNum;
     if (this.readerMode !== ReaderMode.Webtoon && (this.layoutMode === LayoutMode.Double || this.layoutMode === LayoutMode.DoubleReversed)) {
       return this.mangaReaderService.adjustForDoubleReader(pageNum);
     } else if (this.readerMode !== ReaderMode.Webtoon && (this.layoutMode === LayoutMode.DoubleNoCover || this.layoutMode === LayoutMode.DoubleReversedNoCover)) {
@@ -1541,6 +1540,15 @@ export class MangaReaderComponent implements OnInit, AfterViewInit, OnDestroy {
     let tempPageNum = this.pageNum;
     if (this.pageNum == this.maxPages - 1 && this.pagingDirection === PAGING_DIRECTION.FORWARD) {
       tempPageNum = this.pageNum + 1;
+    }
+
+    if ((this.doubleRenderer.shouldRenderDouble() || 
+         this.doubleReverseRenderer.shouldRenderDouble() || 
+         this.doubleNoCoverRenderer.shouldRenderDouble() || 
+         this.doubleReverseNoCoverRenderer.shouldRenderDouble() || 
+         this.DoubleReverseFirstSingleRenderer.shouldRenderDouble()) &&
+         this.pageNum == this.maxPages - 2 && this.pagingDirection === PAGING_DIRECTION.FORWARD) {
+      tempPageNum = this.pageNum + 2;
     }
 
     if (!this.incognitoMode && !this.bookmarkMode) {
