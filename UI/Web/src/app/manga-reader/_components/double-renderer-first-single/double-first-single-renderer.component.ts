@@ -18,22 +18,24 @@ import { LayoutMode } from '../../_models/layout-mode';
 import { FITTING_OPTION, PAGING_DIRECTION } from '../../_models/reader-enums';
 import { ReaderSetting } from '../../_models/reader-setting';
 import { DEBUG_MODES, ImageRenderer } from '../../_models/renderer';
-import { MangaReaderService } from '../../_service/manga-reader.service';
+import { ManagaReaderService } from '../../_service/managa-reader.service';
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 import { SafeStylePipe } from '../../../_pipes/safe-style.pipe';
 
 /**
- * Renders 2 pages except on last page, and before a wide image
+ * This is aimed at manga. Double page renderer but where if we have page = 10, you will see
+ * page 11 page 10.
  */
 @Component({
-    selector: 'app-double-no-cover-renderer',
-    templateUrl: './double-no-cover-renderer.component.html',
-    styleUrls: ['./double-no-cover-renderer.component.scss'],
+    selector: 'app-double-first-single-renderer',
+    templateUrl: './double-first-single-renderer.component.html',
+    styleUrls: ['./double-first-single-renderer.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: true,
     imports: [NgIf, NgClass, AsyncPipe, SafeStylePipe]
 })
-export class DoubleNoCoverRendererComponent implements OnInit, ImageRenderer {
+export class DoubleFirstSingleRendererComponent implements OnInit, ImageRenderer {
+
 
   @Input({required: true}) readerSettings$!: Observable<ReaderSetting>;
   @Input({required: true}) image$!: Observable<HTMLImageElement | null>;
@@ -45,6 +47,7 @@ export class DoubleNoCoverRendererComponent implements OnInit, ImageRenderer {
   private readonly destroyRef = inject(DestroyRef);
 
   debugMode: DEBUG_MODES = DEBUG_MODES.Logs;
+
   imageFitClass$!: Observable<string>;
   showClickOverlayClass$!: Observable<string>;
   readerModeClass$!: Observable<string>;
@@ -62,7 +65,7 @@ export class DoubleNoCoverRendererComponent implements OnInit, ImageRenderer {
    */
   currentImage = new Image();
    /**
-    * Used solely for LayoutMode.Double rendering.
+    * Used solely for LayoutMode.Double rendering. Will always hold the next image to currentImage
     * @remarks Used for rendering to screen.
     */
   currentImage2 = new Image();
@@ -75,21 +78,20 @@ export class DoubleNoCoverRendererComponent implements OnInit, ImageRenderer {
   */
   shouldRenderDouble$!: Observable<boolean>;
 
-
   get ReaderMode() {return ReaderMode;}
   get FITTING_OPTION() {return FITTING_OPTION;}
   get LayoutMode() {return LayoutMode;}
 
 
 
-  constructor(private readonly cdRef: ChangeDetectorRef, public mangaReaderService: MangaReaderService,
+  constructor(private readonly cdRef: ChangeDetectorRef, public mangaReaderService: ManagaReaderService,
     @Inject(DOCUMENT) private document: Document, public readerService: ReaderService) { }
 
   ngOnInit(): void {
     this.readerModeClass$ = this.readerSettings$.pipe(
+      filter(_ => this.isValid()),
       map(values => values.readerMode),
       map(mode => mode === ReaderMode.LeftRight || mode === ReaderMode.UpDown ? '' : 'd-none'),
-      filter(_ => this.isValid()),
       takeUntilDestroyed(this.destroyRef)
     );
 
@@ -120,16 +122,14 @@ export class DoubleNoCoverRendererComponent implements OnInit, ImageRenderer {
 
         this.currentImage = this.getPage(this.pageNum);
         this.currentImage2 = this.getPage(this.pageNum + 1);
-
-        this.cdRef.markForCheck();
       }),
       filter(_ => this.isValid()),
     ).subscribe(() => {});
 
     this.shouldRenderDouble$ = this.pageNum$.pipe(
       takeUntilDestroyed(this.destroyRef),
-      map((_) => this.shouldRenderDouble()),
-      filter(_ => this.isValid()),
+      map(() => this.shouldRenderDouble()),
+      filter(() => this.isValid()),
       shareReplay()
     );
 
@@ -146,6 +146,7 @@ export class DoubleNoCoverRendererComponent implements OnInit, ImageRenderer {
         if (value[0] && value[1].fitting === FITTING_OPTION.WIDTH) return 'fit-to-width-double-offset';
         if (value[0] && value[1].fitting === FITTING_OPTION.HEIGHT) return 'fit-to-height-double-offset';
         if (value[0] && value[1].fitting === FITTING_OPTION.ORIGINAL) return 'original-double-offset';
+        if (this.mangaReaderService.isWidePage(this.pageNum) ) return 'double-offset';
         return '';
       }),
       filter(_ => this.isValid()),
@@ -169,7 +170,7 @@ export class DoubleNoCoverRendererComponent implements OnInit, ImageRenderer {
         if (image1 != null) elements.push(image1);
 
         const image2 = this.document.querySelector('#image-2');
-        if (image2 != null) elements.push(image2);
+          if (image2 != null) elements.push(image2);
 
         this.mangaReaderService.applyBookmarkEffect(elements);
       }),
@@ -180,13 +181,18 @@ export class DoubleNoCoverRendererComponent implements OnInit, ImageRenderer {
   shouldRenderDouble() {
     if (!this.isValid()) return false;
 
-    // if (this.mangaReaderService.isCoverImage(this.pageNum)) {
-    //   this.debugLog('Not rendering double as current page is cover image');
-    //   return false;
-    // }
+    if (this.mangaReaderService.isCoverImage(this.pageNum)) {
+      this.debugLog('Not rendering double as current page is cover image');
+      return false;
+    }
 
     if (this.mangaReaderService.isWidePage(this.pageNum)) {
       this.debugLog('Not rendering double as current page is wide image');
+      return false;
+    }
+
+    if (this.mangaReaderService.isFirstNonWidePage(this.pageNum)) {
+      this.debugLog('Not rendering double as current page is first none wide image after cover');
       return false;
     }
 
@@ -199,7 +205,7 @@ export class DoubleNoCoverRendererComponent implements OnInit, ImageRenderer {
       this.debugLog('Not rendering double as next page is wide image');
       return false;
     }
-    
+
     if (this.mangaReaderService.isLastImage(this.pageNum, this.maxPages)) {
       this.debugLog('Not rendering double as current page is last and there are an odd number of pages');
       return false;
@@ -209,20 +215,13 @@ export class DoubleNoCoverRendererComponent implements OnInit, ImageRenderer {
   }
 
   isValid() {
-    return this.layoutMode === LayoutMode.DoubleNoCover;
+    return this.layoutMode === LayoutMode.DoubleFirstSingle;
   }
 
   renderPage(img: Array<HTMLImageElement | null>): void {
     if (img === null || img.length === 0 || img[0] === null) return;
     if (!this.isValid()) return;
 
-    // First load, switching from double manga -> double, this is 0 and thus not rendering
-    if (!this.shouldRenderDouble() && (this.currentImage.height || img[0].height) > 0) {
-      this.imageHeight.emit(this.currentImage.height || img[0].height);
-      return;
-    }
-
-    this.cdRef.markForCheck();
     this.imageHeight.emit(Math.max(this.currentImage.height, this.currentImage2.height));
     this.cdRef.markForCheck();
   }
@@ -234,10 +233,15 @@ export class DoubleNoCoverRendererComponent implements OnInit, ImageRenderer {
     return true;
   }
   getPageAmount(direction: PAGING_DIRECTION): number {
-    if (this.layoutMode !== LayoutMode.DoubleNoCover) return 0;
+    if (this.layoutMode !== LayoutMode.DoubleFirstSingle) return 0;
 
     switch (direction) {
       case PAGING_DIRECTION.FORWARD:
+        if (this.mangaReaderService.isCoverImage(this.pageNum)) {
+          this.debugLog('Moving forward 1 page as on cover image');
+          return 1;
+        }
+
         if (this.mangaReaderService.isWidePage(this.pageNum)) {
           this.debugLog('Moving forward 1 page as current page is wide');
           return 1;
@@ -248,9 +252,9 @@ export class DoubleNoCoverRendererComponent implements OnInit, ImageRenderer {
           return 1;
         }
 
-        if (this.mangaReaderService.isCoverImage(this.pageNum)) {
-          this.debugLog('Moving forward 2 pages as on cover image');
-          return 2;
+        if (this.mangaReaderService.isFirstNonWidePage(this.pageNum)) {
+          this.debugLog('Moving forward 1 page as current page is wide');
+          return 1;
         }
 
         if (this.mangaReaderService.isSecondLastImage(this.pageNum, this.maxPages)) {
@@ -266,16 +270,9 @@ export class DoubleNoCoverRendererComponent implements OnInit, ImageRenderer {
         this.debugLog('Moving forward 2 pages');
         return 2;
       case PAGING_DIRECTION.BACKWARDS:
-
-      if (this.mangaReaderService.isCoverImage(this.pageNum - 1)) {
-        // TODO: If we are moving back and prev page is cover and we are not showing on right side, then move back twice as if we did once, we would show pageNum twice
-        this.debugLog('Moving back 1 page as on cover image');
-        return 2;
-      }
-
         if (this.mangaReaderService.isCoverImage(this.pageNum)) {
           this.debugLog('Moving back 1 page as on cover image');
-          return 2;
+          return 1;
         }
 
         if (this.mangaReaderService.adjustForDoubleReader(this.pageNum - 1) != this.pageNum - 1 && !this.mangaReaderService.isWidePage(this.pageNum - 2)) {
@@ -283,15 +280,15 @@ export class DoubleNoCoverRendererComponent implements OnInit, ImageRenderer {
           return 2;
         }
 
-        if (this.mangaReaderService.isWidePage(this.pageNum)) {
-          this.debugLog('Moving back 1 page as left page is wide');
-          return 1;
-        }
+        // if (this.mangaReaderService.isWidePage(this.pageNum)) {
+        //   this.debugLog('Moving back 1 page as left page is wide');
+        //   return 1;
+        // }
 
-        if (this.mangaReaderService.isWidePage(this.pageNum) && (!this.mangaReaderService.isWidePage(this.pageNum - 4))) {
-          this.debugLog('Moving back 1 page as left page is wide');
-          return 1;
-        }
+        // if (this.mangaReaderService.isWidePage(this.pageNum) && (!this.mangaReaderService.isWidePage(this.pageNum - 4))) {
+        //   this.debugLog('Moving back 1 page as left page is wide');
+        //   return 1;
+        // }
 
         if (this.mangaReaderService.isWidePage(this.pageNum - 1)) {
           this.debugLog('Moving back 1 page as prev page is wide');
@@ -305,8 +302,14 @@ export class DoubleNoCoverRendererComponent implements OnInit, ImageRenderer {
 
         if (this.mangaReaderService.isWidePage(this.pageNum + 2)) {
           this.debugLog('Moving back 2 page as 2 pages back is wide');
+          return 2;
+        }
+
+        if (this.mangaReaderService.isFirstNonWidePage(this.pageNum - 1)) {
+          this.debugLog('Moving back 1 page as 1 page back is first none wide page');
           return 1;
         }
+
         // Not sure about this condition on moving backwards
         if (this.mangaReaderService.isSecondLastImage(this.pageNum, this.maxPages)) {
           this.debugLog('Moving back 2 page as 2 pages left');

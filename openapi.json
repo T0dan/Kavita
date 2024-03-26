@@ -16109,6 +16109,24 @@
             },
             "description": "For Double Page reader, this will contain snap points to ensure the reader always resumes on correct page",
             "nullable": true
+          },
+          "doublePairsNoCover": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "description": "For Double Page reader with no cover, this will contain snap points to ensure the reader always resumes on correct page",
+            "nullable": true
+          },
+          "doublePairsFirstSingle": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "integer",
+              "format": "int32"
+            },
+            "description": "For Double Page reader where first non wide page after cover is single, this will contain snap points to ensure the reader always resumes on correct page",
+            "nullable": true
           }
         },
         "additionalProperties": false

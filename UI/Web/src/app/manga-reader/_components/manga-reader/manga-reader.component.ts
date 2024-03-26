@@ -60,6 +60,7 @@ import {SingleRendererComponent} from '../single-renderer/single-renderer.compon
 import {ChapterInfo} from '../../_models/chapter-info';
 import {DoubleNoCoverRendererComponent} from '../double-renderer-no-cover/double-no-cover-renderer.component';
 import {DoubleReverseNoCoverRendererComponent } from '../double-reverse-renderer-no-cover/double-reverse-no-cover-renderer.component';
+import {DoubleFirstSingleRendererComponent } from '../double-renderer-first-single/double-first-single-renderer.component';
 import {DoubleReverseFirstSingleRendererComponent } from '../double-reverse-renderer-first-single/double-reverse-first-single-renderer.component';
 import {SwipeEvent} from 'src/app/ng-swipe/ag-swipe.core';
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
@@ -127,7 +128,7 @@ enum KeyDirection {
     standalone: true,
   imports: [NgStyle, LoadingComponent, SwipeDirective, CanvasRendererComponent, SingleRendererComponent,
     DoubleRendererComponent, DoubleReverseRendererComponent, DoubleNoCoverRendererComponent, 
-    DoubleReverseNoCoverRendererComponent, DoubleReverseFirstSingleRendererComponent, InfiniteScrollerComponent,
+    DoubleReverseNoCoverRendererComponent, DoubleFirstSingleRendererComponent, DoubleReverseFirstSingleRendererComponent, InfiniteScrollerComponent,
     NgxSliderModule, ReactiveFormsModule, FittingIconPipe, ReaderModeIconPipe,
     FullscreenIconPipe, TranslocoDirective, PercentPipe, NgClass, AsyncPipe, DblClickDirective]
 })
@@ -144,7 +145,8 @@ export class MangaReaderComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild(DoubleReverseRendererComponent, { static: false }) doubleReverseRenderer!: DoubleReverseRendererComponent;
   @ViewChild(DoubleNoCoverRendererComponent, { static: false }) doubleNoCoverRenderer!: DoubleNoCoverRendererComponent;
   @ViewChild(DoubleReverseNoCoverRendererComponent, { static: false }) doubleReverseNoCoverRenderer!: DoubleReverseNoCoverRendererComponent;
-  @ViewChild(DoubleReverseFirstSingleRendererComponent, { static: false }) DoubleReverseFirstSingleRenderer!: DoubleReverseFirstSingleRendererComponent;
+  @ViewChild(DoubleFirstSingleRendererComponent, { static: false }) doubleFirstSingleRenderer!: DoubleFirstSingleRendererComponent;
+  @ViewChild(DoubleReverseFirstSingleRendererComponent, { static: false }) doubleReverseFirstSingleRenderer!: DoubleReverseFirstSingleRendererComponent;
   
   private readonly destroyRef = inject(DestroyRef);
   private readonly route = inject(ActivatedRoute);
@@ -785,7 +787,7 @@ export class MangaReaderComponent implements OnInit, AfterViewInit, OnDestroy {
       return this.mangaReaderService.adjustForDoubleReader(pageNum);
     } else if (this.readerMode !== ReaderMode.Webtoon && (this.layoutMode === LayoutMode.DoubleNoCover || this.layoutMode === LayoutMode.DoubleReversedNoCover)) {
       return this.mangaReaderService.adjustForDoubleNoCoverReader(pageNum);
-    } else if (this.readerMode !== ReaderMode.Webtoon && this.layoutMode === LayoutMode.DoubleReversedFirstSingle) {
+    } else if (this.readerMode !== ReaderMode.Webtoon && (this.layoutMode === LayoutMode.DoubleFirstSingle || this.layoutMode === LayoutMode.DoubleReversedFirstSingle)) {
       return this.mangaReaderService.adjustForDoubleFirstSingleReader(pageNum);
     } 
     return pageNum;
@@ -1265,7 +1267,8 @@ export class MangaReaderComponent implements OnInit, AfterViewInit, OnDestroy {
                                 this.doubleReverseRenderer.getPageAmount(PAGING_DIRECTION.FORWARD),
                                 this.doubleNoCoverRenderer.getPageAmount(PAGING_DIRECTION.FORWARD),
                                 this.doubleReverseNoCoverRenderer.getPageAmount(PAGING_DIRECTION.FORWARD),
-                                this.DoubleReverseFirstSingleRenderer.getPageAmount(PAGING_DIRECTION.FORWARD)
+                                this.doubleFirstSingleRenderer.getPageAmount(PAGING_DIRECTION.FORWARD),
+                                this.doubleReverseFirstSingleRenderer.getPageAmount(PAGING_DIRECTION.FORWARD)
                               );
     // If we are on last page with split mode, we need to be able to progress, hence why we check if we could move backwards or not
     const isSplitRendering = [PageSplitOption.SplitRightToLeft, PageSplitOption.SplitRightToLeft].includes(parseInt(this.generalSettingsForm.get('pageSplitOption')?.value, 10));
@@ -1303,7 +1306,8 @@ export class MangaReaderComponent implements OnInit, AfterViewInit, OnDestroy {
                                 this.doubleNoCoverRenderer.getPageAmount(PAGING_DIRECTION.BACKWARDS),
                                 this.doubleReverseRenderer.getPageAmount(PAGING_DIRECTION.BACKWARDS),
                                 this.doubleReverseNoCoverRenderer.getPageAmount(PAGING_DIRECTION.BACKWARDS),
-                                this.DoubleReverseFirstSingleRenderer.getPageAmount(PAGING_DIRECTION.BACKWARDS)
+                                this.doubleFirstSingleRenderer.getPageAmount(PAGING_DIRECTION.BACKWARDS),
+                                this.doubleReverseFirstSingleRenderer.getPageAmount(PAGING_DIRECTION.BACKWARDS)
                               );
 
     const notInSplit = this.readerMode === ReaderMode.Webtoon ? true : this.canvasRenderer.shouldMovePrev();
@@ -1422,7 +1426,8 @@ export class MangaReaderComponent implements OnInit, AfterViewInit, OnDestroy {
     this.doubleNoCoverRenderer?.renderPage(page);
     this.doubleReverseRenderer?.renderPage(page);
     this.doubleReverseNoCoverRenderer?.renderPage(page);
-    this.DoubleReverseFirstSingleRenderer?.renderPage(page);
+    this.doubleFirstSingleRenderer?.renderPage(page);
+    this.doubleReverseFirstSingleRenderer?.renderPage(page);
 
     // Originally this was only for fit to height, but when swiping was introduced, it made more sense to do it always to reset to the same view
     this.readingArea.nativeElement.scroll(0,0);
@@ -1546,7 +1551,8 @@ export class MangaReaderComponent implements OnInit, AfterViewInit, OnDestroy {
          this.doubleReverseRenderer.shouldRenderDouble() || 
          this.doubleNoCoverRenderer.shouldRenderDouble() || 
          this.doubleReverseNoCoverRenderer.shouldRenderDouble() || 
-         this.DoubleReverseFirstSingleRenderer.shouldRenderDouble()) &&
+         this.doubleFirstSingleRenderer.shouldRenderDouble() || 
+         this.doubleReverseFirstSingleRenderer.shouldRenderDouble()) &&
          this.pageNum == this.maxPages - 2 && this.pagingDirection === PAGING_DIRECTION.FORWARD) {
       tempPageNum = this.pageNum + 2;
     }
@@ -1703,7 +1709,7 @@ export class MangaReaderComponent implements OnInit, AfterViewInit, OnDestroy {
     // if canvasRenderer and doubleRenderer is undefined, then we are in webtoon mode
     const isDouble = this.canvasRenderer !== undefined && this.doubleRenderer !== undefined && Math.max(this.canvasRenderer.getBookmarkPageCount(), this.singleRenderer.getBookmarkPageCount(),
       this.doubleRenderer.getBookmarkPageCount(), this.doubleReverseRenderer.getBookmarkPageCount(), this.doubleNoCoverRenderer.getBookmarkPageCount(),
-      this.doubleReverseNoCoverRenderer.getBookmarkPageCount(), this.DoubleReverseFirstSingleRenderer.getBookmarkPageCount()) > 1;
+      this.doubleReverseNoCoverRenderer.getBookmarkPageCount(), this.doubleFirstSingleRenderer.getBookmarkPageCount(), this.doubleReverseFirstSingleRenderer.getBookmarkPageCount()) > 1;
 
     if (this.CurrentPageBookmarked) {
       let apis = [this.readerService.unbookmark(this.seriesId, this.volumeId, this.chapterId, pageNum)];

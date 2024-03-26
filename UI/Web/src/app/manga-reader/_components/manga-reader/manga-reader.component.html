@@ -129,6 +129,14 @@
                                                 [getPage]="getPageFn">
           </app-double-reverse-no-cover-renderer>
 
+          <app-double-first-single-renderer [image$]="currentImage$" 
+                                                    [readerSettings$]="readerSettings$" 
+                                                    [bookmark$]="showBookmarkEffect$"
+                                                    [showClickOverlay$]="showClickOverlay$"
+                                                    [pageNum$]="pageNum$"
+                                                    [getPage]="getPageFn">
+          </app-double-first-single-renderer>
+
           <app-double-reverse-first-single-renderer [image$]="currentImage$" 
                                                     [readerSettings$]="readerSettings$" 
                                                     [bookmark$]="showBookmarkEffect$"
@@ -288,6 +296,18 @@
                         <span class="fa-stack fa right">
                           <i class="fa-regular fa-square-full fa-stack-2x"></i>
                           <i class="fab fa-1 fa-stack-1x"></i>
+                        </span>
+                      </div>                                   
+                    }
+                    @case (LayoutMode.DoubleFirstSingle) {
+                      <div class="split-double">
+                        <span class="fa-stack fa-1x">
+                          <i class="fa-regular fa-square-full fa-stack-2x"></i>
+                          <i class="fab fa-1 fa-stack-1x"></i>
+                        </span>
+                        <span class="fa-stack fa right">
+                          <i class="fa-regular fa-square-full fa-stack-2x"></i>
+                          <i class="fab fa-2 fa-stack-1x"></i>
                         </span>
                       </div>                                   
                     }

@@ -2723,6 +2723,8 @@
         "webtoon": "Webtoon",
         "single": "Single",
         "double": "Double",
+        "double-first-non-wide-single": "Double (First none wide single)",
+        "double-no-cover": "Double (No cover)",
         "double-manga": "Double (Manga)",
         "double-manga-first-non-wide-single": "Double (Manga) (First none wide single)",
         "double-manga-no-cover": "Double (Manga) (No cover)",
