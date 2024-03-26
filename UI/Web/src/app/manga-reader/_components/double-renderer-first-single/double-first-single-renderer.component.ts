@@ -27,14 +27,14 @@ import { SafeStylePipe } from '../../../_pipes/safe-style.pipe';
  * page 11 page 10.
  */
 @Component({
-    selector: 'app-double-reverse-first-single-renderer',
-    templateUrl: './double-reverse-first-single-renderer.component.html',
-    styleUrls: ['./double-reverse-first-single-renderer.component.scss'],
+    selector: 'app-double-first-single-renderer',
+    templateUrl: './double-first-single-renderer.component.html',
+    styleUrls: ['./double-first-single-renderer.component.scss'],
     changeDetection: ChangeDetectionStrategy.OnPush,
     standalone: true,
     imports: [NgIf, NgClass, AsyncPipe, SafeStylePipe]
 })
-export class DoubleReverseFirstSingleRendererComponent implements OnInit, ImageRenderer {
+export class DoubleFirstSingleRendererComponent implements OnInit, ImageRenderer {
 
 
   @Input({required: true}) readerSettings$!: Observable<ReaderSetting>;
@@ -63,12 +63,12 @@ export class DoubleReverseFirstSingleRendererComponent implements OnInit, ImageR
    * Used to render a page on the canvas or in the image tag. This Image element is prefetched by the cachedImages buffer.
    * @remarks Used for rendering to screen.
    */
-  leftImage = new Image();
+  currentImage = new Image();
    /**
     * Used solely for LayoutMode.Double rendering. Will always hold the next image to currentImage
     * @remarks Used for rendering to screen.
     */
-  rightImage = new Image();
+  currentImage2 = new Image();
 
   /**
    * Determines if we should render a double page.
@@ -120,8 +120,8 @@ export class DoubleReverseFirstSingleRendererComponent implements OnInit, ImageR
         this.pageNum = pageInfo.pageNum;
         this.maxPages = pageInfo.maxPages;
 
-        this.leftImage = this.getPage(this.pageNum);
-        this.rightImage = this.getPage(this.pageNum + 1);
+        this.currentImage = this.getPage(this.pageNum);
+        this.currentImage2 = this.getPage(this.pageNum + 1);
       }),
       filter(_ => this.isValid()),
     ).subscribe(() => {});
@@ -215,14 +215,14 @@ export class DoubleReverseFirstSingleRendererComponent implements OnInit, ImageR
   }
 
   isValid() {
-    return this.layoutMode === LayoutMode.DoubleReversedFirstSingle;
+    return this.layoutMode === LayoutMode.DoubleFirstSingle;
   }
 
   renderPage(img: Array<HTMLImageElement | null>): void {
     if (img === null || img.length === 0 || img[0] === null) return;
     if (!this.isValid()) return;
 
-    this.imageHeight.emit(Math.max(this.leftImage.height, this.rightImage.height));
+    this.imageHeight.emit(Math.max(this.currentImage.height, this.currentImage2.height));
     this.cdRef.markForCheck();
   }
 
@@ -233,7 +233,7 @@ export class DoubleReverseFirstSingleRendererComponent implements OnInit, ImageR
     return true;
   }
   getPageAmount(direction: PAGING_DIRECTION): number {
-    if (this.layoutMode !== LayoutMode.DoubleReversedFirstSingle) return 0;
+    if (this.layoutMode !== LayoutMode.DoubleFirstSingle) return 0;
 
     switch (direction) {
       case PAGING_DIRECTION.FORWARD:

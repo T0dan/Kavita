@@ -17,7 +17,7 @@ import { ReaderService } from 'src/app/_services/reader.service';
 import { LayoutMode } from '../../_models/layout-mode';
 import { FITTING_OPTION, PAGING_DIRECTION } from '../../_models/reader-enums';
 import { ReaderSetting } from '../../_models/reader-setting';
-import { DEBUG_MODES } from '../../_models/renderer';
+import { DEBUG_MODES, ImageRenderer } from '../../_models/renderer';
 import { ManagaReaderService } from '../../_service/managa-reader.service';
 import {takeUntilDestroyed} from "@angular/core/rxjs-interop";
 import { SafeStylePipe } from '../../../_pipes/safe-style.pipe';
@@ -33,7 +33,7 @@ import { SafeStylePipe } from '../../../_pipes/safe-style.pipe';
     standalone: true,
     imports: [NgIf, NgClass, AsyncPipe, SafeStylePipe]
 })
-export class DoubleNoCoverRendererComponent implements OnInit {
+export class DoubleNoCoverRendererComponent implements OnInit, ImageRenderer {
 
   @Input({required: true}) readerSettings$!: Observable<ReaderSetting>;
   @Input({required: true}) image$!: Observable<HTMLImageElement | null>;
@@ -130,6 +130,7 @@ export class DoubleNoCoverRendererComponent implements OnInit {
       takeUntilDestroyed(this.destroyRef),
       map((_) => this.shouldRenderDouble()),
       filter(_ => this.isValid()),
+      shareReplay()
     );
 
     this.imageFitClass$ = this.readerSettings$.pipe(
@@ -184,23 +185,23 @@ export class DoubleNoCoverRendererComponent implements OnInit {
     //   return false;
     // }
 
-    if (this.mangaReaderService.isWidePage(this.pageNum) ) {
+    if (this.mangaReaderService.isWidePage(this.pageNum)) {
       this.debugLog('Not rendering double as current page is wide image');
       return false;
     }
 
-    if (this.mangaReaderService.isSecondLastImage(this.pageNum, this.maxPages)) {
-      this.debugLog('Not rendering double as current page is last');
-      return false;
-    }
-
-    if (this.mangaReaderService.isLastImage(this.pageNum, this.maxPages)) {
-      this.debugLog('Not rendering double as current page is last');
-      return false;
-    }
+    // if (this.mangaReaderService.isSecondLastImage(this.pageNum, this.maxPages)) {
+    //   this.debugLog('Not rendering double as current page is last');
+    //   return false;
+    // }
 
     if (this.mangaReaderService.isWidePage(this.pageNum + 1) ) {
       this.debugLog('Not rendering double as next page is wide image');
+      return false;
+    }
+    
+    if (this.mangaReaderService.isLastImage(this.pageNum, this.maxPages)) {
+      this.debugLog('Not rendering double as current page is last and there are an odd number of pages');
       return false;
     }
 
@@ -233,7 +234,7 @@ export class DoubleNoCoverRendererComponent implements OnInit {
     return true;
   }
   getPageAmount(direction: PAGING_DIRECTION): number {
-    if (!this.isValid()) return 0;
+    if (this.layoutMode !== LayoutMode.DoubleNoCover) return 0;
 
     switch (direction) {
       case PAGING_DIRECTION.FORWARD:
@@ -241,22 +242,27 @@ export class DoubleNoCoverRendererComponent implements OnInit {
           this.debugLog('Moving forward 1 page as current page is wide');
           return 1;
         }
+
         if (this.mangaReaderService.isWidePage(this.pageNum + 1)) {
-          this.debugLog('Moving forward 1 page as next page is wide');
+          this.debugLog('Moving forward 1 page as current page is wide');
           return 1;
         }
+
         if (this.mangaReaderService.isCoverImage(this.pageNum)) {
-          this.debugLog('Moving forward 2 page as on cover image');
+          this.debugLog('Moving forward 2 pages as on cover image');
           return 2;
         }
+
         if (this.mangaReaderService.isSecondLastImage(this.pageNum, this.maxPages)) {
-          this.debugLog('Moving forward 1 page as 2 pages left');
-          return 1;
+          this.debugLog('Moving forward 2 page as 2 pages left');
+          return 2;
         }
+
         if (this.mangaReaderService.isLastImage(this.pageNum, this.maxPages)) {
-          this.debugLog('Moving forward 1 page as 1 page left');
-          return 1;
+          this.debugLog('Moving forward 2 pages as right image is the last page and we just rendered double page');
+          return 2;
         }
+
         this.debugLog('Moving forward 2 pages');
         return 2;
       case PAGING_DIRECTION.BACKWARDS:
@@ -278,7 +284,12 @@ export class DoubleNoCoverRendererComponent implements OnInit {
         }
 
         if (this.mangaReaderService.isWidePage(this.pageNum)) {
-          this.debugLog('Moving back 1 page as current page is wide');
+          this.debugLog('Moving back 1 page as left page is wide');
+          return 1;
+        }
+
+        if (this.mangaReaderService.isWidePage(this.pageNum) && (!this.mangaReaderService.isWidePage(this.pageNum - 4))) {
+          this.debugLog('Moving back 1 page as left page is wide');
           return 1;
         }
 
@@ -286,11 +297,21 @@ export class DoubleNoCoverRendererComponent implements OnInit {
           this.debugLog('Moving back 1 page as prev page is wide');
           return 1;
         }
+
         if (this.mangaReaderService.isWidePage(this.pageNum - 2)) {
           this.debugLog('Moving back 1 page as 2 pages back is wide');
           return 1;
         }
 
+        if (this.mangaReaderService.isWidePage(this.pageNum + 2)) {
+          this.debugLog('Moving back 2 page as 2 pages back is wide');
+          return 1;
+        }
+        // Not sure about this condition on moving backwards
+        if (this.mangaReaderService.isSecondLastImage(this.pageNum, this.maxPages)) {
+          this.debugLog('Moving back 2 page as 2 pages left');
+          return 2;
+        }
         this.debugLog('Moving back 2 pages');
         return 2;
     }
