@@ -7,7 +7,6 @@ import {
   inject,
   Inject,
   Input,
-  OnDestroy,
   OnInit,
   Output
 } from '@angular/core';
