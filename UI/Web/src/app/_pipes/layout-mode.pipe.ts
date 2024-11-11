@@ -16,6 +16,9 @@ export class LayoutModePipe implements PipeTransform {
       case LayoutMode.Double: return translate('preferences.double');
       case LayoutMode.DoubleReversed: return translate('preferences.double-manga');
       case LayoutMode.DoubleNoCover: return translate('preferences.double-no-cover');
+      case LayoutMode.DoubleFirstSingle: return translate('preferences.double-first-non-wide-single');
+      case LayoutMode.DoubleReversedFirstSingle: return translate('preferences.double-manga-first-non-wide-single');
+      case LayoutMode.DoubleReversedNoCover: return translate('preferences.double-manga-no-cover');
     }
   }
 
