@@ -1547,14 +1547,16 @@ export class MangaReaderComponent implements OnInit, AfterViewInit, OnDestroy {
       tempPageNum = this.pageNum + 1;
     }
 
-    if ((this.doubleRenderer.shouldRenderDouble() || 
-         this.doubleReverseRenderer.shouldRenderDouble() || 
-         this.doubleNoCoverRenderer.shouldRenderDouble() || 
-         this.doubleReverseNoCoverRenderer.shouldRenderDouble() || 
-         this.doubleFirstSingleRenderer.shouldRenderDouble() || 
-         this.doubleReverseFirstSingleRenderer.shouldRenderDouble()) &&
-         this.pageNum == this.maxPages - 2 && this.pagingDirection === PAGING_DIRECTION.FORWARD) {
-      tempPageNum = this.pageNum + 2;
+    if (this.readerMode !== ReaderMode.Webtoon) {
+      if ((this.doubleRenderer.shouldRenderDouble() || 
+        this.doubleReverseRenderer.shouldRenderDouble() || 
+        this.doubleNoCoverRenderer.shouldRenderDouble() || 
+        this.doubleReverseNoCoverRenderer.shouldRenderDouble() || 
+        this.doubleFirstSingleRenderer.shouldRenderDouble() || 
+        this.doubleReverseFirstSingleRenderer.shouldRenderDouble()) &&
+        this.pageNum == this.maxPages - 2 && this.pagingDirection === PAGING_DIRECTION.FORWARD) {
+        tempPageNum = this.pageNum + 2;
+      }
     }
 
     if (!this.incognitoMode && !this.bookmarkMode) {
