@@ -13,7 +13,7 @@ RUN wget https://packages.microsoft.com/config/ubuntu/20.04/packages-microsoft-p
   && dpkg -i packages-microsoft-prod.deb \
   && rm packages-microsoft-prod.deb \
   && apt-get update \
-  && apt-get install -y dotnet-sdk-8.0
+  && apt-get install -y dotnet-sdk-9.0
 
 #Install nodejs
 RUN mkdir -p /etc/apt/keyrings \
