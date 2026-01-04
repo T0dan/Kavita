@@ -189,11 +189,6 @@ export class DoubleNoCoverRendererComponent implements OnInit {
       return false;
     }
 
-    if (this.mangaReaderService.isSecondLastImage(this.pageNum, this.maxPages)) {
-      this.debugLog('Not rendering double as current page is last');
-      return false;
-    }
-
     if (this.mangaReaderService.isLastImage(this.pageNum, this.maxPages)) {
       this.debugLog('Not rendering double as current page is last');
       return false;
@@ -248,10 +243,6 @@ export class DoubleNoCoverRendererComponent implements OnInit {
         if (this.mangaReaderService.isCoverImage(this.pageNum)) {
           this.debugLog('Moving forward 2 page as on cover image');
           return 2;
-        }
-        if (this.mangaReaderService.isSecondLastImage(this.pageNum, this.maxPages)) {
-          this.debugLog('Moving forward 1 page as 2 pages left');
-          return 1;
         }
         if (this.mangaReaderService.isLastImage(this.pageNum, this.maxPages)) {
           this.debugLog('Moving forward 1 page as 1 page left');

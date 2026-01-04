@@ -190,11 +190,6 @@ export class DoubleReverseRendererComponent implements OnInit, ImageRenderer {
       return false;
     }
 
-    if (this.mangaReaderService.isSecondLastImage(this.pageNum, this.maxPages)) {
-      this.debugLog('Not rendering double as current page is last');
-      return false;
-    }
-
     if (this.mangaReaderService.isWidePage(this.pageNum + 1) ) {
       this.debugLog('Not rendering double as next page is wide image');
       return false;
@@ -246,14 +241,9 @@ export class DoubleReverseRendererComponent implements OnInit, ImageRenderer {
           return 1;
         }
 
-        if (this.mangaReaderService.isSecondLastImage(this.pageNum, this.maxPages)) {
-          this.debugLog('Moving forward 1 page as 2 pages left');
-          return 1;
-        }
-
         if (this.mangaReaderService.isLastImage(this.pageNum, this.maxPages)) {
-          this.debugLog('Moving forward 2 pages as right image is the last page and we just rendered double page');
-          return 2;
+          this.debugLog('Moving forward 1 page as 1 page left');
+          return 1;
         }
 
         this.debugLog('Moving forward 2 pages');
@@ -291,11 +281,6 @@ export class DoubleReverseRendererComponent implements OnInit, ImageRenderer {
 
         if (this.mangaReaderService.isWidePage(this.pageNum + 2)) {
           this.debugLog('Moving back 2 page as 2 pages back is wide');
-          return 1;
-        }
-        // Not sure about this condition on moving backwards
-        if (this.mangaReaderService.isSecondLastImage(this.pageNum, this.maxPages)) {
-          this.debugLog('Moving back 1 page as 2 pages left');
           return 1;
         }
         this.debugLog('Moving back 2 pages');

@@ -1717,6 +1717,14 @@ export class MangaReaderComponent implements OnInit, AfterViewInit, OnDestroy {
       tempPageNum = this.pageNum + 1;
     }
 
+    // When in double reader mode and the two last pages are a double, mark last page as read if on second last page
+    if ((this.doubleRenderer()?.shouldRenderDouble() || 
+         this.doubleReverseRenderer()?.shouldRenderDouble() || 
+         this.doubleNoCoverRenderer()?.shouldRenderDouble()) &&
+         this.pageNum == this.maxPages - 2 && this.pagingDirection === PAGING_DIRECTION.FORWARD) {
+      tempPageNum = this.pageNum + 2;
+    }
+
     // We need to avoid calling this on first load (except if the chapter only has one page)
     if (!this.incognitoMode && !this.bookmarkMode() && (!this.inSetup || this.maxPages === 1)) {
       if (isSamePage) {
