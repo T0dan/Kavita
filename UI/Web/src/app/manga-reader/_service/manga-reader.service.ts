@@ -17,7 +17,7 @@ export class MangaReaderService {
   private pageDimensions: DimensionMap = {};
   private pairs: {[key: number]: number} = {};
   private renderer: Renderer2;
-  private hasPageOffset: boolean = false;
+  private coverPageOffset: number = 1;
 
   constructor() {
     const rendererFactory = inject(RendererFactory2);
@@ -34,13 +34,30 @@ export class MangaReaderService {
       };
     });
     this.pairs = chapterInfo.doublePairs!;
-    this.hasPageOffset = false;
+  }
+
+  genPairs() {
+    this.pairs = {};
+    let prevP: number = 0;
+    let pairStart: boolean = true;
+    Object.entries(this.pageDimensions ?? {}).slice(0, this.coverPageOffset).forEach(([ps, _]) => {
+      let p = Number(ps);
+      this.pairs[p] = p;
+    });
+    Object.entries(this.pageDimensions ?? {}).slice(this.coverPageOffset).forEach(([ps, d]) => {
+      let p = Number(ps);
+      if (d.isWide) {
+        this.pairs[p] = p;
+        pairStart = true;
+      } else {
+        this.pairs[p] = pairStart ? p : prevP;
+        pairStart = !pairStart;
+      }
+      prevP = p;
+    });
   }
 
   adjustForDoubleReader(page: number) {
-    if (this.hasPageOffset === true) {
-      return Math.floor(page / 2) * 2;
-    }
     if (!this.pairs.hasOwnProperty(page)) return page;
     return this.pairs[page];
   }
@@ -76,12 +93,12 @@ export class MangaReaderService {
    * @returns
    */
   isCoverImage(pageNumber: number) {
-    if (this.hasPageOffset) return false;
-    return pageNumber === 0;
+    return pageNumber < this.coverPageOffset;
   }
 
-  setPageOffset(toggle: boolean) {
-    this.hasPageOffset = toggle;
+  setCoverPageOffset(offset: number) {
+    this.coverPageOffset = offset;
+    this.genPairs();
   }
 
   /**

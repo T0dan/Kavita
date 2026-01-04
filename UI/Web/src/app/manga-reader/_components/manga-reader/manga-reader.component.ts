@@ -236,6 +236,10 @@ export class MangaReaderComponent implements OnInit, AfterViewInit, OnDestroy {
   pageSplitOptionsTranslated = pageSplitOptions.map(this.translatePrefOptions);
   layoutModesTranslated = layoutModes.map(this.translatePrefOptions);
 
+  readonly coverPageOffsetMin = 0;
+  readonly coverPageOffsetMax = 3;
+  readonly coverPageOffsetDef = 1;
+
   isLoading = true;
   hasBookmarkRights = computed(() => this.accountService.hasBookmarkRole() || this.accountService.hasAdminRole());
 
@@ -748,8 +752,8 @@ export class MangaReaderComponent implements OnInit, AfterViewInit, OnDestroy {
       darkness: new FormControl(100),
       emulateBook: new FormControl(this.readingProfile.emulateBook),
       swipeToPaginate: new FormControl(this.readingProfile.swipeToPaginate),
-      pageOffset: new FormControl(false),
       readingDirection: this.readingDirection,
+      coverPageOffsetSlider: new FormControl(1),
     });
 
     this.readerModeSubject.next(this.readerMode);
@@ -795,7 +799,7 @@ export class MangaReaderComponent implements OnInit, AfterViewInit, OnDestroy {
         this.generalSettingsForm.get('widthSlider')?.enable();
         this.generalSettingsForm.get('fittingOption')?.enable();
         this.generalSettingsForm.get('emulateBook')?.enable();
-        this.generalSettingsForm.get('pageOffset')?.disable();
+        this.generalSettingsForm.get('coverPageOffsetSlider')?.disable();
       } else {
         this.generalSettingsForm.get('pageSplitOption')?.setValue(PageSplitOption.NoSplit);
         this.generalSettingsForm.get('pageSplitOption')?.disable();
@@ -803,7 +807,7 @@ export class MangaReaderComponent implements OnInit, AfterViewInit, OnDestroy {
         this.generalSettingsForm.get('fittingOption')?.setValue(this.mangaReaderService.translateScalingOption(ScalingOption.FitToHeight));
         this.generalSettingsForm.get('fittingOption')?.disable();
         this.generalSettingsForm.get('emulateBook')?.enable();
-        this.generalSettingsForm.get('pageOffset')?.enable();
+        this.generalSettingsForm.get('coverPageOffsetSlider')?.enable();
       }
       this.cdRef.markForCheck();
 
@@ -817,9 +821,10 @@ export class MangaReaderComponent implements OnInit, AfterViewInit, OnDestroy {
     this.generalSettingsForm.valueChanges.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(() => {
       this.autoCloseMenu = this.generalSettingsForm.get('autoCloseMenu')?.value;
       this.pageSplitOption = parseInt(this.generalSettingsForm.get('pageSplitOption')?.value, 10);
-      const pageOffset = this.generalSettingsForm.get('pageOffset')?.value;
-      if (pageOffset !== undefined) {
-        this.mangaReaderService.setPageOffset(pageOffset);
+
+      const coverPageOffset = this.generalSettingsForm.get('coverPageOffsetSlider')?.value;
+      if (coverPageOffset !== undefined) {
+        this.mangaReaderService.setCoverPageOffset(coverPageOffset);
         const adjustedPage = this.mangaReaderService.adjustForDoubleReader(this.pageNum);
         this.pageNumSubject.next({pageNum: adjustedPage, maxPages: this.maxPages});
         this.pageNum = adjustedPage;
@@ -1074,6 +1079,8 @@ export class MangaReaderComponent implements OnInit, AfterViewInit, OnDestroy {
         this.libraryType = bookmarkInfo.libraryType;
         this.maxPages = bookmarkInfo.pages;
         this.mangaReaderService.load(bookmarkInfo);
+        this.mangaReaderService.setCoverPageOffset(this.coverPageOffsetDef);
+        this.generalSettingsForm.patchValue({coverPageOffsetSlider: this.coverPageOffsetDef});
 
         // Due to change detection rules in Angular, we need to re-create the options object to apply the change
         const newOptions: Options = Object.assign({}, this.pageOptions);
@@ -1108,6 +1115,8 @@ export class MangaReaderComponent implements OnInit, AfterViewInit, OnDestroy {
       this.chapterInfo.set(results.chapterInfo);
 
       this.mangaReaderService.load(results.chapterInfo);
+      this.mangaReaderService.setCoverPageOffset(this.coverPageOffsetDef);
+      this.generalSettingsForm.patchValue({coverPageOffsetSlider: this.coverPageOffsetDef});
 
       this.continuousChapterInfos[ChapterInfoPosition.Current] = results.chapterInfo;
       this.volumeId = results.chapterInfo.volumeId;
@@ -1823,8 +1832,12 @@ export class MangaReaderComponent implements OnInit, AfterViewInit, OnDestroy {
       return;
     }
 
-    const currentValue = this.generalSettingsForm.get('pageOffset')?.value;
-    this.generalSettingsForm.patchValue({pageOffset: !currentValue});
+    let currentValue = this.generalSettingsForm.get('coverPageOffsetSlider')?.value;
+    currentValue += 1;
+    if (currentValue > this.coverPageOffsetMax) {
+      currentValue = this.coverPageOffsetMin;
+    }
+    this.generalSettingsForm.patchValue({coverPageOffsetSlider: currentValue});
   }
 
   // This is menu only code

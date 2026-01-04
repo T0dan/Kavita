@@ -276,13 +276,6 @@
                       <label class="form-check-label" for="emulate-book">{{t('emulate-comic-book-label')}}</label>
                     </div>
                   </div>
-
-                  <div class="mb-3">
-                    <div class="form-check form-switch" [title]="generalSettingsForm.get('pageOffset')?.disabled ? t('offset-only-double') : ''">
-                      <input type="checkbox" id="page-offset" formControlName="pageOffset" class="form-check-input" switch>
-                      <label class="form-check-label" for="page-offset">{{t('page-offset-label')}}</label>
-                    </div>
-                  </div>
                 </div>
               </div>
               <div class="row mb-2">
@@ -291,6 +284,13 @@
                   <span class="ms-1 range-text">{{generalSettingsForm.get('darkness')?.value + '%'}}</span>
                   <input type="range" class="form-range" id="darkness"
                          min="10" max="100" step="1" formControlName="darkness">
+                </div>
+
+                <div class="col-md-6 col-sm-12">
+                  <label for="cover-page-offset-slider" class="form-label">{{t('cover-page-offset-label')}}: 
+                    {{ generalSettingsForm.get('coverPageOffsetSlider')?.value }}
+                  </label>
+                  <input id="cover-page-offset-slider" type="range" [min]="coverPageOffsetMin" [max]="coverPageOffsetMax" class="form-range" formControlName="coverPageOffsetSlider">
                 </div>
 
                 <div class="col-md-6 col-sm-12">
